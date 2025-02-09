@@ -1,14 +1,14 @@
-const jugadoresRegistrados = JSON.parse(localStorage.getItem('jugadoresRegistrados')) || ['Fede', 'Nico', 'Tobi', 'Ernes', 'Santi', 'Caño', 'Colo', 'Mati', 'Jero', 'Vega'];
-const participantes = JSON.parse(localStorage.getItem('participantes')) || {};
-const partidas = JSON.parse(localStorage.getItem('partidas')) || [];
+const jugadoresRegistrados = [];
+const participantes = {};
+const partidas = [];
 const passwordCorrecta = "trucoargento";
-let partidaEditando = null; // Variable para rastrear la partida que se está editando
-let indexEliminar = null; // Variable para rastrear la partida que se está eliminando
+let partidaEditando = null;
+let indexEliminar = null;
+
+const spreadsheetId = '17iDo6NA2skFUuIxGoBUvnuKQ-w0IvBv5VsX7afbP7aI';
 
 function guardarDatos() {
-    localStorage.setItem('jugadoresRegistrados', JSON.stringify(jugadoresRegistrados));
-    localStorage.setItem('participantes', JSON.stringify(participantes));
-    localStorage.setItem('partidas', JSON.stringify(partidas));
+    saveDataToSheet();
 }
 
 function inicializarParticipantes() {
@@ -44,7 +44,7 @@ function verificarPassword() {
         document.getElementById('passwordDialog').style.display = 'none';
         if (indexEliminar !== null) {
             eliminarPartida(indexEliminar);
-            indexEliminar = null; // Resetear la variable
+            indexEliminar = null;
         } else {
             document.getElementById('vistaGestion').classList.add('active');
             actualizarListaJugadores();
@@ -56,8 +56,8 @@ function verificarPassword() {
 
 function ocultarDialogo() {
     document.getElementById('passwordDialog').style.display = 'none';
-    indexEliminar = null; // Resetear la variable en caso de cancelar la eliminación
-    mostrarVista('torneo'); // Vuelve a la vista principal
+    indexEliminar = null;
+    mostrarVista('torneo');
 }
 
 function actualizarListaJugadores() {
@@ -126,7 +126,7 @@ function agregarJugador() {
         actualizarListaJugadores();
         cambiarFormulario();
         document.getElementById('nuevoJugador').value = '';
-        inicializarParticipantes(); // Inicializar el nuevo jugador
+        inicializarParticipantes();
         guardarDatos();
     } else {
         alert('Por favor, introduce un nombre válido y no duplicado.');
@@ -194,13 +194,12 @@ function registrarPartida() {
         }
     }
 
-    // Si estamos editando una partida, eliminamos las estadísticas anteriores
     if (partidaEditando !== null) {
         const partidaAnterior = partidas[partidaEditando];
         actualizarEstadisticas(partidaAnterior.equipo1, partidaAnterior.puntosEquipo1, partidaAnterior.puntosEquipo1 > partidaAnterior.puntosEquipo2, false);
         actualizarEstadisticas(partidaAnterior.equipo2, partidaAnterior.puntosEquipo2, partidaAnterior.puntosEquipo2 > partidaAnterior.puntosEquipo1, false);
-        partidas.splice(partidaEditando, 1); // Eliminar la partida antigua
-        partidaEditando = null; // Resetear la variable
+        partidas.splice(partidaEditando, 1);
+        partidaEditando = null;
     }
 
     const partida = {
@@ -254,15 +253,14 @@ function actualizarTabla() {
     const tbody = document.querySelector('#tablaGeneral tbody');
     tbody.innerHTML = '';
 
-    inicializarParticipantes(); // Asegurarse de que todos los participantes estén inicializados
+    inicializarParticipantes();
 
     let participantesArray = Object.keys(participantes).map(jugador => ({
         nombre: jugador,
         ...participantes[jugador],
-        promedio: (participantes[jugador].puntos / (participantes[jugador].partidas || 1)).toFixed(2) // Evitar división por cero
+        promedio: (participantes[jugador].puntos / (participantes[jugador].partidas || 1)).toFixed(2)
     }));
 
-    // Ordenar participantes según el criterio seleccionado
     if (criterioOrden === 'puntos') {
         participantesArray.sort((a, b) => b.puntos - a.puntos);
     } else if (criterioOrden === 'partidas') {
@@ -311,7 +309,7 @@ function actualizarTablaPartidas() {
 
 function editarPartida(index) {
     const partida = partidas[index];
-    partidaEditando = index; // Establecer la partida que estamos editando
+    partidaEditando = index;
     document.getElementById('tipoPartida').value = partida.tipoPartida;
     cambiarFormulario();
     
@@ -330,7 +328,7 @@ function editarPartida(index) {
 }
 
 function mostrarDialogoEliminar(index) {
-    indexEliminar = index; // Guardar el índice de la partida que se desea eliminar
+    indexEliminar = index;
     document.getElementById('passwordDialog').style.display = 'block';
 }
 
@@ -357,8 +355,76 @@ function limpiarCampos() {
     document.getElementById('fecha').value = '';
 }
 
-// Inicializar el formulario y tabla
-cambiarFormulario();
-inicializarParticipantes(); // Inicializar participantes al cargar la página
-actualizarTabla();
-actualizarTablaPartidas();
+function authenticate() {
+    return gapi.auth2.getAuthInstance()
+        .signIn({ scope: "https://www.googleapis.com/auth/spreadsheets" })
+        .then(() => {
+            console.log("Sign-in successful");
+            loadClient();
+        })
+        .catch(err => {
+            console.error("Error signing in", err);
+        });
+}
+
+function loadClient() {
+    gapi.client.setApiKey("YOUR_API_KEY");
+    return gapi.client.load("https://sheets.googleapis.com/$discovery/rest?version=v4")
+        .then(() => {
+            console.log("GAPI client loaded for API");
+            loadDataFromSheet();
+        })
+        .catch(err => {
+            console.error("Error loading GAPI client for API", err);
+        });
+}
+
+function loadDataFromSheet() {
+    gapi.client.sheets.spreadsheets.values.get({
+        spreadsheetId,
+        range: 'Sheet1!A2:E',
+    }).then(response => {
+        const data = response.result.values;
+        jugadoresRegistrados.push(...data.map(row => row[0]));
+        data.forEach(row => {
+            participantes[row[0]] = {
+                puntos: parseInt(row[1]),
+                partidas: parseInt(row[2]),
+                ganadas: parseInt(row[3]),
+                perdidas: parseInt(row[4])
+            };
+        });
+        actualizarListaJugadores();
+        actualizarTabla();
+        actualizarTablaPartidas();
+    });
+}
+
+function saveDataToSheet() {
+    const data = jugadoresRegistrados.map(jugador => [
+        jugador,
+        participantes[jugador].puntos,
+        participantes[jugador].partidas,
+        participantes[jugador].ganadas,
+        participantes[jugador].perdidas
+    ]);
+
+    gapi.client.sheets.spreadsheets.values.update({
+        spreadsheetId,
+        range: 'Sheet1!A2:E',
+        valueInputOption: 'RAW',
+        resource: {
+            values: data
+        }
+    }).then(response => {
+        console.log('Data saved to sheet');
+    });
+}
+
+function init() {
+    gapi.load("client:auth2", () => {
+        gapi.auth2.init({ client_id: "YOUR_CLIENT_ID" });
+    });
+}
+
+document.addEventListener("DOMContentLoaded", init);
