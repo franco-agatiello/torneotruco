@@ -1,0 +1,219 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Torneo de Truco - Grupo Casino</title>
+    <link rel="stylesheet" href="styles.css">
+    <link rel="icon" href="favicon.ico" type="image/x-icon"> <!-- .Favicon link -->
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <img src="logo.png" alt="Logo Grupo Casino" class="logo">
+                <h1>Torneo de Truco 2025 - Grupo Casino</h1>
+            </div>
+        </header>
+        <nav>
+            <button onclick="mostrarVista('torneo')">Torneo</button>
+            <button onclick="mostrarVista('nuevaPartida')">Ingresar Nueva Partida</button>
+            <button onclick="mostrarVista('registroPartidas')">Registro de Partidas</button>
+            <button onclick="mostrarVista('gestion')">Gestionar Jugadores</button>
+            <button onclick="mostrarVista('reglamento')">Reglamento</button>
+        </nav>
+
+        <main>
+            <div id="vistaTorneo" class="vista active">
+                <div class="input-row">
+                    <label for="criterioOrden">Ordenar por:</label>
+                    <select id="criterioOrden" onchange="actualizarTabla()">
+                        <option value="promedio">Mejor Promedio</option>
+                        <option value="puntos">Más Puntos</option>
+                        <option value="partidas">Más Partidas Jugadas</option>
+                    </select>
+                </div>
+                <table id="tablaGeneral">
+                    <thead>
+                        <tr>
+                            <th>Posición</th>
+                            <th>Participante</th>
+                            <th>Puntos Totales</th>
+                            <th>Partidas Jugadas</th>
+                            <th>Promedio</th>
+                            <th>Ganadas</th>
+                            <th>Perdidas</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div id="vistaNuevaPartida" class="vista">
+                <div class="input-row">
+                    <label for="tipoPartida">Tipo de Partida:</label>
+                    <select id="tipoPartida" onchange="cambiarFormulario()">
+                        <option value="2v2">2 vs 2</option>
+                        <option value="3v3">3 vs 3</option>
+                    </select>
+                </div>
+                <div id="formularioPartida">
+                    <!-- El formulario dinámico se insertará aquí -->
+                </div>
+                <div class="input-row">
+                    <input type="text" id="lugar" placeholder="Lugar">
+                    <input type="date" id="fecha">
+                </div>
+                <button onclick="registrarPartida()">Registrar Partida</button>
+            </div>
+
+            <div id="vistaRegistroPartidas" class="vista">
+                <h2>Registro de Partidas</h2>
+                <table id="tablaPartidas">
+                    <thead>
+                        <tr>
+                            <th>#</th>
+                            <th>Lugar</th>
+                            <th>Fecha</th>
+                            <th>Tipo</th>
+                            <th>Equipo 1</th>
+                            <th>Equipo 2</th>
+                            <th>Puntos Equipo 1</th>
+                            <th>Puntos Equipo 2</th>
+                            <th>Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody></tbody>
+                </table>
+            </div>
+
+            <div id="vistaGestion" class="vista">
+                <div class="input-row">
+                    <input type="text" id="nuevoJugador" placeholder="Nuevo Jugador">
+                    <button onclick="agregarJugador()">Añadir Jugador</button>
+                </div>
+                <div>
+                    <h3>Jugadores Registrados</h3>
+                    <ul id="listaJugadores"></ul>
+                </div>
+            </div>
+
+            <div id="vistaReglamento" class="vista">
+                <h2>Reglamento del Torneo de Truco 2025</h2>
+                <p><strong>📅 Duración:</strong></p>
+                <p>Inicio: 1 de enero de 2025<br>Fin: 31 de diciembre de 2025</p>
+
+                <p><strong>👥 Participantes:</strong></p>
+                <ul>
+                    <li> Jero </li>
+                    <li> Fede </li>
+                    <li> Tobi </li>
+                    <li> Colo </li>
+                    <li> Ernes </li>
+                    <li> Caño </li>
+                    <li> Dan </li>
+                    <li> Mati </li>
+                    <li> Nico </li>
+                    <li> Vega </li>
+                    <li> Santi </li>
+                    <!-- Hasta 9 participantes -->
+                </ul>
+
+                <p><strong>📊 Condición:</strong></p>
+                <p>30 partidas durante el año para cada participante.</p>
+
+                <p><strong>🔢 Puntuación:</strong></p>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Resultado</th>
+                            <th>Puntos</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Partida Ganada (rival con ≤ 15 pts)</td>
+                            <td>3 pts</td>
+                        </tr>
+                        <tr>
+                            <td>Partida Ganada (rival con > 15 pts)</td>
+                            <td>2 pts</td>
+                        </tr>
+                        <tr>
+                            <td>Partida Perdida (con > 15 pts)</td>
+                            <td>1 pts</td>
+                        </tr>
+                        <tr>
+                            <td>Partida Perdida (con ≤ 15 pts)</td>
+                            <td>0 pts</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p><strong>📈 Tabla General (basada en promedios):</strong></p>
+                <p><strong>Promedio</strong>: Se calcula como la suma total de puntos obtenidos dividida por la cantidad de partidas jugadas.</p>
+                <p>Ejemplo:</p>
+                <p>Santi obtuvo 10 puntos en 5 partidas → Promedio = 10 ÷ 5 = 2.00</p>
+
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Participante</th>
+                            <th>Puntos Totales</th>
+                            <th>Partidas Jugadas</th>
+                            <th>Promedio</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>Santi</td>
+                            <td>10</td>
+                            <td>5</td>
+                            <td>2.00</td>
+                        </tr>
+                        <tr>
+                            <td>Juan</td>
+                            <td>15</td>
+                            <td>10</td>
+                            <td>1.50</td>
+                        </tr>
+                        <tr>
+                            <td>María</td>
+                            <td>8</td>
+                            <td>6</td>
+                            <td>1.33</td>
+                        </tr>
+                    </tbody>
+                </table>
+
+                <p><strong>✅ Condición de validez de la partida:</strong></p>
+                <p>Para que una partida sea válida y cuente en la tabla general:</p>
+                <ul>
+                    <li>Debe haber al menos 6 jugadores.</li>
+                    <li>Todos los jugadores deben ser participantes oficiales del torneo.</li>
+                </ul>
+
+                <p><strong>🎁 Premios:</strong></p>
+                <ul>
+                    <li>1er Lugar: Trofeo Campeón de Truco 2025</li>
+                    <li>2do y 3er Lugar: A definir</li>
+                    <li>4to y 5to Lugar: A definir</li>
+                </ul>
+            </div>
+        </main>
+
+        <!-- Dialogo de contraseña -->
+        <div id="passwordDialog" class="password-dialog">
+            <div class="password-content">
+                <h3>Ingrese la contraseña</h3>
+                <input type="password" id="passwordInput" placeholder="Contraseña">
+                <button onclick="verificarPassword()">Ingresar</button>
+                <button onclick="ocultarDialogo()">Volver</button>
+                <p id="passwordError" class="error-message" style="display:none;">Contraseña incorrecta</p>
+                <p class="mensaje">que miras puto</p>
+            </div>
+        </div>
+    </div>
+    <script src="script.js"></script>
+</body>
+</html>
